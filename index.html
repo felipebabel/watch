@@ -26,17 +26,8 @@
           window.history.replaceState(null, '', redirect)
         }
       })()
-      // If this page is loaded inside a popup (opened by the main app for OAuth),
-      // notify the opener and close the popup
-      ;(function() {
-        if (window.opener && window.opener !== window) {
-          // Send the current URL to the parent window
-          window.opener.postMessage({ type: 'supabase-oauth-callback', href: window.location.href }, window.location.origin)
-          window.close()
-        }
-      })()
     </script>
-    <script type="module" crossorigin src="/assets/index-BlRjBWN-.js"></script>
+    <script type="module" crossorigin src="/assets/index-BJYs94Qq.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-B0Z9INg1.js">
     <link rel="stylesheet" crossorigin href="/assets/index-DINBQoP9.css">
   </head>
