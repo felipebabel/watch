@@ -9,6 +9,7 @@ export function useWatchedMovies() {
     queryKey: ['watched-movies', user?.id],
     queryFn: () => getWatchedMovies(user!.id),
     enabled: !!user,
+    staleTime: 0,
   })
 }
 

@@ -10,6 +10,7 @@ export function useUserShows() {
     queryKey: ['user-shows', user?.id],
     queryFn: () => getUserShows(user!.id),
     enabled: !!user,
+    staleTime: 0,
   })
 }
 

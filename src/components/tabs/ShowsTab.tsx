@@ -40,6 +40,7 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
     queryKey: ['watched-numbers', user?.id, showDbId],
     queryFn: () => getWatchedEpisodeNumbers(user!.id, showDbId),
     enabled: !!user && !!showDbId,
+    staleTime: 0, // always refetch after invalidation
   })
 
   const watchedSet = new Set(watched.map((w: any) => `${w.season}-${w.episode}`))

@@ -92,6 +92,7 @@ export default function ShowPage() {
     queryKey: ['watched-map', user?.id, showDbId],
     queryFn: () => fetchWatchedMap(user!.id, showDbId),
     enabled: !!user && !!showDbId,
+    staleTime: 0, // always refetch after invalidation
   })
 
   const addShow = useAddShow()
@@ -110,7 +111,9 @@ export default function ShowPage() {
       await toggleEpisodeWatched(user!.id, currentShowDbId, season, episode, name, watched)
     },
     onSuccess: () => {
+      // Invalidate all watched queries so ShowsTab updates too
       qc.invalidateQueries({ queryKey: ['watched-map', user?.id, showDbId] })
+      qc.invalidateQueries({ queryKey: ['watched-numbers', user?.id, showDbId] })
     },
   })
 
