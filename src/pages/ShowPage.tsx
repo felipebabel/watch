@@ -111,7 +111,7 @@ export default function ShowPage() {
     staleTime: 1000 * 60 * 60,
   })
 
-  const { data: watchedMap } = useQuery({
+  const { data: watchedMap, isLoading: watchedMapLoading } = useQuery({
     queryKey: ['watched-map', user?.id, showDbId],
     queryFn: () => fetchWatchedMap(user!.id, showDbId),
     enabled: !!user && !!showDbId,
@@ -445,7 +445,7 @@ export default function ShowPage() {
         {/* Season tabs */}
         <div className="mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {show.seasons.filter(s => s.season_number > 0).map(season => {
-            const complete = isSeasonComplete(season.season_number, season.episode_count)
+            const complete = !watchedMapLoading && isSeasonComplete(season.season_number, season.episode_count)
             const isSelected = selectedSeason === season.season_number
             return (
               <button
@@ -475,7 +475,7 @@ export default function ShowPage() {
           ) : (
             seasonData?.episodes.map(ep => {
               const key = `${ep.season_number}-${ep.episode_number}`
-              const watched = watchedMap?.has(key) ?? false
+              const watched = !watchedMapLoading && (watchedMap?.has(key) ?? false)
               const still = tmdbImg(ep.still_path, 'w200')
 
               return (
