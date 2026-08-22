@@ -382,13 +382,13 @@ export default function ShowPage() {
         </div>
       )}
 
-      {/* Backdrop */}
-      <div className="relative h-52 bg-surface-2">
-        {backdrop && <img src={backdrop} alt="" className="w-full h-full object-cover opacity-60" />}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+      {/* Backdrop — tall enough to cover poster + status buttons */}
+      <div className="relative h-80 bg-surface-2">
+        {backdrop && <img src={backdrop} alt="" className="w-full h-full object-cover opacity-50" />}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-background" />
       </div>
 
-      <div className="px-4 -mt-16 relative">
+      <div className="px-4 -mt-32 relative">
         {/* Poster + info */}
         <div className="flex gap-4">
           <div className="w-24 h-36 rounded-xl overflow-hidden bg-surface-2 shrink-0 border border-white/10 shadow-xl">
@@ -397,7 +397,7 @@ export default function ShowPage() {
               : <div className="w-full h-full flex items-center justify-center text-3xl">📺</div>
             }
           </div>
-          <div className="flex flex-col justify-end gap-1 pt-20">
+          <div className="flex flex-col justify-end gap-1 pt-32">
             <h1 className="font-bold text-base leading-tight">{show.name}</h1>
             <p className="text-xs text-muted">
               {show.first_air_date?.slice(0, 4)} · {show.number_of_seasons} season{show.number_of_seasons !== 1 ? 's' : ''}
