@@ -70,6 +70,9 @@ export default function ShowPage() {
 
   const tmdbId = parseInt(id ?? '0')
   const [selectedSeason, setSelectedSeason] = useState(1)
+  const [pendingEpisode, setPendingEpisode] = useState<{
+    season: number; episode: number; name: string | null
+  } | null>(null)
 
   const { data: show, isLoading } = useQuery({
     queryKey: ['show', tmdbId],
@@ -153,6 +156,75 @@ export default function ShowPage() {
     },
   })
 
+  // Mark all episodes before a given season/episode as watched
+  const markPreviousMutation = useMutation({
+    mutationFn: async ({ untilSeason, untilEpisode }: { untilSeason: number; untilEpisode: number }) => {
+      if (!show) return
+      let currentShowDbId = showDbId
+      if (!currentShowDbId) {
+        currentShowDbId = await upsertShow(tmdbId, show.name, show.poster_path)
+        await setShowStatus(user!.id, currentShowDbId, 'watching')
+        qc.invalidateQueries({ queryKey: ['user-shows'] })
+      }
+      for (const s of show.seasons.filter(se => se.season_number > 0)) {
+        if (s.season_number > untilSeason) break
+        const maxEp = s.season_number === untilSeason ? untilEpisode - 1 : s.episode_count
+        for (let e = 1; e <= maxEp; e++) {
+          if (watchedMap?.has(`${s.season_number}-${e}`)) continue
+          const { data: epData } = await supabase
+            .from('episodes')
+            .upsert({ show_id: currentShowDbId, season: s.season_number, episode: e, name: null },
+              { onConflict: 'show_id,season,episode' })
+            .select('id').single()
+          if (epData) {
+            await supabase.from('watched_episodes')
+              .upsert({ user_id: user!.id, episode_id: epData.id }, { onConflict: 'user_id,episode_id' })
+          }
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['watched-map', user?.id, showDbId] })
+      qc.invalidateQueries({ queryKey: ['watched-numbers', user?.id, showDbId] })
+    },
+  })
+
+  const hasPreviousUnwatched = (season: number, episode: number): boolean => {
+    if (!show || !watchedMap) return false
+    for (const s of show.seasons.filter(se => se.season_number > 0)) {
+      if (s.season_number > season) break
+      const maxEp = s.season_number === season ? episode - 1 : s.episode_count
+      for (let e = 1; e <= maxEp; e++) {
+        if (!watchedMap.has(`${s.season_number}-${e}`)) return true
+      }
+    }
+    return false
+  }
+
+  const handleEpisodeClick = (ep: { season_number: number; episode_number: number; name: string }) => {
+    if (toggleMutation.isPending || markPreviousMutation.isPending) return
+    const watched = watchedMap?.has(`${ep.season_number}-${ep.episode_number}`) ?? false
+    if (watched) {
+      toggleMutation.mutate({ season: ep.season_number, episode: ep.episode_number, name: ep.name, watched })
+      return
+    }
+    if (hasPreviousUnwatched(ep.season_number, ep.episode_number)) {
+      setPendingEpisode({ season: ep.season_number, episode: ep.episode_number, name: ep.name })
+      return
+    }
+    toggleMutation.mutate({ season: ep.season_number, episode: ep.episode_number, name: ep.name, watched })
+  }
+
+  const confirmPrevious = async (markAll: boolean) => {
+    if (!pendingEpisode) return
+    const { season, episode, name } = pendingEpisode
+    setPendingEpisode(null)
+    if (markAll) {
+      await markPreviousMutation.mutateAsync({ untilSeason: season, untilEpisode: episode })
+    }
+    toggleMutation.mutate({ season, episode, name, watched: false })
+  }
+
   const backdrop = tmdbImg(show?.backdrop_path, 'w500')
   const poster = tmdbImg(show?.poster_path, 'w342')
 
@@ -175,6 +247,41 @@ export default function ShowPage() {
       >
         ←
       </button>
+
+      {/* Mark previous episodes modal */}
+      {pendingEpisode && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
+          <div className="bg-surface-2 border border-white/10 rounded-2xl w-full max-w-sm p-5 flex flex-col gap-4">
+            <div>
+              <h3 className="font-semibold text-base">Mark previous episodes?</h3>
+              <p className="text-sm text-muted mt-1">
+                There are unwatched episodes before S{pendingEpisode.season} E{pendingEpisode.episode}. Mark them all as watched?
+              </p>
+            </div>
+            {markPreviousMutation.isPending ? (
+              <div className="flex items-center justify-center py-2 gap-2 text-sm text-muted">
+                <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                Marking episodes…
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <button onClick={() => confirmPrevious(true)}
+                  className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm">
+                  Yes, mark all previous
+                </button>
+                <button onClick={() => confirmPrevious(false)}
+                  className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-sm">
+                  No, just this episode
+                </button>
+                <button onClick={() => setPendingEpisode(null)}
+                  className="w-full py-2 text-sm text-muted">
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Backdrop */}
       <div className="relative h-52 bg-surface-2">
@@ -283,12 +390,7 @@ export default function ShowPage() {
               return (
                 <button
                   key={ep.episode_number}
-                  onClick={() => !toggleMutation.isPending && toggleMutation.mutate({
-                    season: ep.season_number,
-                    episode: ep.episode_number,
-                    name: ep.name,
-                    watched,
-                  })}
+                  onClick={() => handleEpisodeClick(ep)}
                   className={`flex items-center gap-3 rounded-xl p-3 border text-left transition-all active:scale-[0.98] ${
                     watched ? 'bg-accent/10 border-accent/20' : 'bg-surface border-white/5'
                   }`}
