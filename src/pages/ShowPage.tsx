@@ -83,7 +83,25 @@ export default function ShowPage() {
 
   const { data: userShows } = useUserShows()
   const userShow = userShows?.find((us: any) => us.shows.tmdb_id === tmdbId)
-  const showDbId = userShow?.shows.id ?? dbId
+  // showDbId from userShow first, then URL param, then fetch from DB by tmdb_id
+  const showDbIdFromUser = userShow?.shows.id ?? dbId
+
+  // Always try to find the show in DB by tmdb_id (even if not in user's list)
+  const { data: showDbIdFromDB } = useQuery({
+    queryKey: ['show-db-id', tmdbId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('shows')
+        .select('id')
+        .eq('tmdb_id', tmdbId)
+        .maybeSingle()
+      return data?.id as string | undefined
+    },
+    enabled: !!tmdbId && !showDbIdFromUser,
+    staleTime: 1000 * 60 * 60,
+  })
+
+  const showDbId = showDbIdFromUser ?? showDbIdFromDB ?? ''
 
   const { data: seasonData, isLoading: loadingSeason } = useQuery({
     queryKey: ['season', tmdbId, selectedSeason],
