@@ -5,6 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import App from './App.tsx'
 
+// Clean bare "#" left by Supabase PKCE OAuth flow before React mounts
+if (window.location.hash === '#' || window.location.hash === '#/') {
+  window.history.replaceState(null, '', window.location.pathname + window.location.search)
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
