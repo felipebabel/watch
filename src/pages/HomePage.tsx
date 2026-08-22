@@ -120,7 +120,14 @@ export default function HomePage() {
       <div className="flex-1 flex flex-col min-h-screen max-w-2xl mx-auto w-full">
 
         {/* Mobile header */}
-        <header className="md:hidden flex items-center justify-between px-4 border-b border-white/5 sticky top-0 bg-[#27272a] z-10" style={{ height: '64px', paddingTop: 'env(safe-area-inset-top)' }}>
+        <header
+          className="md:hidden flex items-center justify-between px-4 border-b border-white/5 sticky top-0 bg-[#27272a] z-10"
+          style={{
+            minHeight: '64px',
+            paddingTop: 'calc(env(safe-area-inset-top) + 10px)',
+            paddingBottom: '10px',
+          }}
+        >
           <img src="/banner.jpg" alt="WatchTime" className="h-[44px] w-auto object-contain" />
           <ProfileDropdown
             avatar={avatar}
