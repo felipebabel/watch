@@ -32,7 +32,7 @@ function ProfileDropdown({
 
   const dropdownClass = position === 'top-right'
     ? 'absolute right-0 top-10 w-52'
-    : 'absolute bottom-14 left-0 w-52'
+    : 'fixed bottom-20 left-4 w-52'
 
   return (
     <div ref={ref} className="relative">
