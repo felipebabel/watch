@@ -37,7 +37,7 @@ export default function SearchTab() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={type === 'tv' ? 'Search TV shows...' : 'Search movies...'}
-          className="w-full bg-surface border border-white/10 rounded-xl pl-9 pr-4 py-3 text-sm outline-none focus:border-accent/50 transition-colors placeholder:text-muted"
+          className="w-full bg-surface border border-white/10 rounded-xl pl-9 pr-4 py-3 text-base outline-none focus:border-accent/50 transition-colors placeholder:text-muted"
           autoComplete="off"
           autoCorrect="off"
         />
