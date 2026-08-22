@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import ShowsTab from '../components/tabs/ShowsTab'
 import MoviesTab from '../components/tabs/MoviesTab'
@@ -70,7 +71,11 @@ function ProfileDropdown({
 
 export default function HomePage() {
   const { user, signOut } = useAuth()
-  const [tab, setTab] = useState<Tab>('shows')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawTab = searchParams.get('tab') as Tab | null
+  const tab: Tab = rawTab && ['shows', 'movies', 'search'].includes(rawTab) ? rawTab : 'shows'
+
+  const setTab = (t: Tab) => setSearchParams({ tab: t }, { replace: true })
 
   const avatar = user?.user_metadata?.avatar_url as string | undefined
   const name   = user?.user_metadata?.full_name as string ?? user?.email ?? ''
