@@ -1,57 +1,66 @@
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import ShowsTab from '../components/tabs/ShowsTab'
+import MoviesTab from '../components/tabs/MoviesTab'
+import SearchTab from '../components/tabs/SearchTab'
+
+type Tab = 'shows' | 'movies' | 'search'
 
 export default function HomePage() {
   const { user, signOut } = useAuth()
+  const [tab, setTab] = useState<Tab>('shows')
 
   return (
-    <div className="min-h-screen px-4 py-8 max-w-md mx-auto">
+    <div className="min-h-screen flex flex-col max-w-md mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-xl font-bold">WatchTime</h1>
-          <p className="text-sm text-muted">
-            Olá, {user?.user_metadata?.name?.split(' ')[0] ?? 'Felipe'} 👋
-          </p>
+      <header className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <img src="/apple-touch-icon.png" alt="WatchTime" className="w-7 h-7 rounded-lg" />
+          <span className="font-bold text-base">WatchTime</span>
         </div>
-
-        <button
-          onClick={signOut}
-          className="flex items-center gap-2 text-sm text-muted hover:text-white transition-colors"
-        >
-          {user?.user_metadata?.avatar_url && (
+        <button onClick={signOut} className="flex items-center gap-2">
+          {user?.user_metadata?.avatar_url ? (
             <img
               src={user.user_metadata.avatar_url}
               alt="Avatar"
               className="w-8 h-8 rounded-full border border-white/10"
             />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-sm">
+              {user?.email?.[0].toUpperCase()}
+            </div>
           )}
         </button>
-      </div>
+      </header>
 
-      {/* Coming soon sections */}
-      <div className="flex flex-col gap-4">
-        {[
-          { emoji: '📺', label: 'Séries', desc: 'Em breve' },
-          { emoji: '🎬', label: 'Filmes', desc: 'Em breve' },
-          { emoji: '📋', label: 'Watchlist', desc: 'Em breve' },
-        ].map(({ emoji, label, desc }) => (
-          <div
-            key={label}
-            className="card p-5 flex items-center gap-4 opacity-60 cursor-not-allowed"
-          >
-            <span className="text-3xl">{emoji}</span>
-            <div>
-              <p className="font-semibold">{label}</p>
-              <p className="text-sm text-muted">{desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Content */}
+      <main className="flex-1 overflow-y-auto px-4 py-4">
+        {tab === 'shows' && <ShowsTab />}
+        {tab === 'movies' && <MoviesTab />}
+        {tab === 'search' && <SearchTab />}
+      </main>
 
-      <p className="text-center text-xs text-muted mt-12">
-        Login feito com sucesso ✅<br />
-        As funcionalidades estão sendo desenvolvidas.
-      </p>
+      {/* Bottom nav */}
+      <nav className="border-t border-white/5 bg-background/95 backdrop-blur-sm pb-safe">
+        <div className="flex">
+          {([
+            { id: 'shows', label: 'Séries', icon: '📺' },
+            { id: 'search', label: 'Buscar', icon: '🔍' },
+            { id: 'movies', label: 'Filmes', icon: '🎬' },
+          ] as { id: Tab; label: string; icon: string }[]).map(({ id, label, icon }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors ${
+                tab === id ? 'text-accent' : 'text-muted'
+              }`}
+            >
+              <span className="text-xl leading-none">{icon}</span>
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   )
 }
