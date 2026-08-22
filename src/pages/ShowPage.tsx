@@ -124,17 +124,7 @@ export default function ShowPage() {
   const removeWithEpisodesMutation = useMutation({
     mutationFn: async (clearEpisodes: boolean) => {
       if (clearEpisodes && showDbId) {
-        await supabase
-          .from('watched_episodes')
-          .delete()
-          .eq('user_id', user!.id)
-          .in('episode_id',
-            supabase
-              .from('episodes')
-              .select('id')
-              .eq('show_id', showDbId) as any
-          )
-        // simpler: delete via join
+        // Fetch all episode ids for this show
         const { data: eps } = await supabase
           .from('episodes')
           .select('id')
