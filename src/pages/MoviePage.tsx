@@ -5,8 +5,8 @@ import { useUserMovies, useSetMovieStatus, useRemoveMovie } from '../hooks/useMo
 
 function CheckIcon({ filled }: { filled: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" className="w-5 h-5" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" fill={filled ? 'currentColor' : 'none'} opacity={filled ? '0.15' : '1'} />
       <path strokeLinecap="round" strokeLinejoin="round" d="M8 12l3 3 5-5" />
     </svg>
   )
@@ -14,8 +14,12 @@ function CheckIcon({ filled }: { filled: boolean }) {
 
 function BookmarkIcon({ filled }: { filled: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" className="w-5 h-5" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z" />
+    <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M5 3h14a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"
+        fill={filled ? 'currentColor' : 'none'}
+        opacity={filled ? '0.3' : '1'}
+      />
     </svg>
   )
 }
