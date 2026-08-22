@@ -297,14 +297,6 @@ export default function ShowPage() {
   return (
     <DesktopLayout>
     <div className="min-h-screen pb-10">
-      {/* Back button — respects iPhone safe area */}
-      <button
-        onClick={() => navigate(-1)}
-        className="fixed top-safe left-4 z-20 w-9 h-9 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white border border-white/10 shadow-lg"
-        style={{ top: `max(env(safe-area-inset-top), 16px)` }}
-      >
-        ←
-      </button>
 
       {/* Mark previous episodes modal */}
       {pendingEpisode && (
@@ -386,6 +378,14 @@ export default function ShowPage() {
       <div className="relative h-80 bg-surface-2">
         {backdrop && <img src={backdrop} alt="" className="w-full h-full object-cover opacity-50" />}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-background" />
+        {/* Back button inside the backdrop */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute left-4 z-10 w-9 h-9 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white border border-white/10 shadow-lg"
+          style={{ top: `max(env(safe-area-inset-top), 16px)` }}
+        >
+          ←
+        </button>
       </div>
 
       <div className="px-4 -mt-32 relative">
