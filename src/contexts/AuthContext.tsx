@@ -40,15 +40,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signInWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-        queryParams: {
-          prompt: 'select_account',
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+    if (!isMobile) {
+      // Desktop: open small popup window for Google account picker
+      const width = 500
+      const height = 600
+      const left = window.screenX + (window.outerWidth - width) / 2
+      const top = window.screenY + (window.outerHeight - height) / 2
+      const popup = window.open('', 'google-signin', `width=${width},height=${height},left=${left},top=${top}`)
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          skipBrowserRedirect: true,
+          queryParams: { prompt: 'select_account' },
         },
-      },
-    })
+      })
+      if (error || !data?.url) return
+      if (popup) popup.location.href = data.url
+
+      // Poll until popup closes — onAuthStateChange handles the session update
+      const timer = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(timer)
+          // onAuthStateChange will fire automatically with the new session
+        }
+      }, 500)
+    } else {
+      // Mobile: standard full-page redirect
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: { prompt: 'select_account' },
+        },
+      })
+    }
   }
 
   const signOut = async () => {
