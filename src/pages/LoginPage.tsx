@@ -19,7 +19,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm flex flex-col items-center gap-8">
         {/* Logo */}
         <div className="flex flex-col items-center gap-4">
-          <img src="/banner.jpg" alt="WatchTime" className="w-full max-w-xs rounded-2xl shadow-2xl object-cover" />
+          <img src="/logo_bold.jpg" alt="WatchTime" className="h-[55px] w-auto object-contain rounded-lg shadow-2xl" />
         </div>
 
         {/* Features */}
