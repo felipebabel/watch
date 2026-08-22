@@ -12,32 +12,74 @@ const NAV_ITEMS: { id: Tab; label: string; icon: string }[] = [
   { id: 'movies', label: 'Movies',  icon: '🎬' },
 ]
 
+function ProfileDropdown({
+  avatar, name, email, onSignOut,
+  position = 'bottom',
+}: {
+  avatar?: string; name: string; email: string
+  onSignOut: () => void; position?: 'bottom' | 'top-right'
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const dropdownClass = position === 'top-right'
+    ? 'absolute right-0 top-10 w-52'
+    : 'absolute bottom-14 left-0 w-52'
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+      >
+        {avatar ? (
+          <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full border border-white/10" />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-sm">
+            {email[0]?.toUpperCase()}
+          </div>
+        )}
+      </button>
+
+      {open && (
+        <div className={`${dropdownClass} bg-surface-2 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50`}>
+          <div className="px-4 py-3 border-b border-white/5">
+            <p className="text-xs font-medium truncate">{name}</p>
+            <p className="text-[10px] text-muted truncate">{email}</p>
+          </div>
+          <button
+            onMouseDown={e => e.preventDefault()} // prevent blur before click
+            onClick={() => { setOpen(false); onSignOut() }}
+            className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-white/5 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function HomePage() {
   const { user, signOut } = useAuth()
   const [tab, setTab] = useState<Tab>('shows')
-  const [profileOpen, setProfileOpen] = useState(false)
-  const profileRef = useRef<HTMLDivElement>(null)
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  const avatar = user?.user_metadata?.avatar_url
-  const name = user?.user_metadata?.full_name ?? user?.email ?? ''
-  const email = user?.email ?? ''
+  const avatar = user?.user_metadata?.avatar_url as string | undefined
+  const name   = user?.user_metadata?.full_name as string ?? user?.email ?? ''
+  const email  = user?.email ?? ''
 
   return (
-    // Outer: full screen, split into sidebar + main on desktop
     <div className="min-h-screen flex">
 
-      {/* ── Desktop sidebar ── (hidden on mobile) */}
+      {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-white/5 px-4 py-6 gap-2 sticky top-0 h-screen">
         <div className="flex items-center gap-2 px-2 mb-6">
           <img src="/apple-touch-icon.png" alt="WatchTime" className="w-7 h-7 rounded-lg" />
@@ -57,39 +99,21 @@ export default function HomePage() {
           </button>
         ))}
 
-        {/* Profile at bottom */}
-        <div className="mt-auto" ref={profileRef}>
-          <button
-            onClick={() => setProfileOpen(v => !v)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left"
-          >
-            {avatar ? (
-              <img src={avatar} alt="Avatar" className="w-7 h-7 rounded-full border border-white/10 shrink-0" />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-xs shrink-0">
-                {email[0]?.toUpperCase()}
-              </div>
-            )}
+        {/* Profile at bottom of sidebar */}
+        <div className="mt-auto px-1">
+          <div className="flex items-center gap-3">
+            <ProfileDropdown
+              avatar={avatar}
+              name={name}
+              email={email}
+              onSignOut={signOut}
+              position="bottom"
+            />
             <div className="min-w-0">
               <p className="text-xs font-medium truncate">{name.split(' ')[0]}</p>
               <p className="text-[10px] text-muted truncate">{email}</p>
             </div>
-          </button>
-
-          {profileOpen && (
-            <div className="absolute bottom-20 left-4 w-48 bg-surface-2 border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
-              <div className="px-4 py-3 border-b border-white/5">
-                <p className="text-xs font-medium truncate">{name}</p>
-                <p className="text-[10px] text-muted truncate">{email}</p>
-              </div>
-              <button
-                onClick={() => { setProfileOpen(false); signOut() }}
-                className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-white/5 transition-colors"
-              >
-                Sign out
-              </button>
-            </div>
-          )}
+          </div>
         </div>
       </aside>
 
@@ -102,37 +126,13 @@ export default function HomePage() {
             <img src="/apple-touch-icon.png" alt="WatchTime" className="w-7 h-7 rounded-lg" />
             <span className="font-bold text-base">WatchTime</span>
           </div>
-
-          {/* Avatar → profile dropdown */}
-          <div ref={profileRef} className="relative">
-            <button
-              onClick={() => setProfileOpen(v => !v)}
-              className="flex items-center"
-            >
-              {avatar ? (
-                <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full border border-white/10" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-surface-2 border border-white/10 flex items-center justify-center text-sm">
-                  {email[0]?.toUpperCase()}
-                </div>
-              )}
-            </button>
-
-            {profileOpen && (
-              <div className="absolute right-0 top-10 w-52 bg-surface-2 border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
-                <div className="px-4 py-3 border-b border-white/5">
-                  <p className="text-xs font-medium truncate">{name}</p>
-                  <p className="text-[10px] text-muted truncate">{email}</p>
-                </div>
-                <button
-                  onClick={() => { setProfileOpen(false); signOut() }}
-                  className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-white/5 transition-colors"
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
-          </div>
+          <ProfileDropdown
+            avatar={avatar}
+            name={name}
+            email={email}
+            onSignOut={signOut}
+            position="top-right"
+          />
         </header>
 
         {/* Tab content */}

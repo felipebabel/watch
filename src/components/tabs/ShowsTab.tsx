@@ -15,34 +15,53 @@ const STATUS_LABELS: Record<WatchStatus, string> = {
   watchlist: 'Want to Watch',
 }
 
+// Animated skeleton shimmer for image loading
+function PosterSkeleton() {
+  return (
+    <div className="w-full h-full bg-surface-2 flex items-center justify-center">
+      <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+    </div>
+  )
+}
+
 // ─── Next episode card ────────────────────────────────────────────────────────
 function NextEpisodeCard({ userShow }: { userShow: any }) {
   const { user } = useAuth()
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const [imgLoaded, setImgLoaded] = useState(false)
+  const [pendingMark, setPendingMark] = useState<{ season: number; episode: number } | null>(null)
 
   const show = userShow.shows
   const tmdbId: number = show.tmdb_id
   const showDbId: string = show.id
+  const poster = tmdbImg(show.poster_path, 'w200')
 
-  // Load TMDB show detail to know total seasons/episodes
+  // Show detail (seasons + episode counts)
   const { data: showDetail } = useQuery({
     queryKey: ['show', tmdbId],
     queryFn: () => tmdb.getShow(tmdbId),
     staleTime: 1000 * 60 * 60,
   })
 
-  // Load watched episodes for this show
+  // Watched episode numbers for this show
   const { data: watched = [] } = useQuery({
     queryKey: ['watched-numbers', user?.id, showDbId],
     queryFn: () => getWatchedEpisodeNumbers(user!.id, showDbId),
     enabled: !!user && !!showDbId,
   })
 
-  // Build a set of "S-E" watched keys
   const watchedSet = new Set(watched.map((w: any) => `${w.season}-${w.episode}`))
 
-  // Find next unwatched episode across all seasons
+  // Total episodes across all seasons (excluding specials)
+  const totalEpisodes = showDetail
+    ? showDetail.seasons.filter(s => s.season_number > 0).reduce((sum, s) => sum + s.episode_count, 0)
+    : null
+
+  const totalWatched = watched.length
+  const remaining = totalEpisodes !== null ? totalEpisodes - totalWatched : null
+
+  // Find next unwatched episode
   let nextSeason = 0
   let nextEp = 0
   if (showDetail) {
@@ -57,22 +76,18 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
     }
   }
 
-  const totalWatched = watched.length
-  const poster = tmdbImg(show.poster_path, 'w200')
+  const allWatched = showDetail && nextSeason === 0
 
-  // Toggle next episode watched
   const toggleMutation = useMutation({
     mutationFn: async ({ season, episode, markWatched }: {
       season: number; episode: number; markWatched: boolean
     }) => {
-      // Upsert episode
       const { data: epData, error: epErr } = await supabase
         .from('episodes')
         .upsert({ show_id: showDbId, season, episode, name: null }, { onConflict: 'show_id,season,episode' })
         .select('id').single()
       if (epErr) throw epErr
       const episodeId = epData.id as string
-
       if (markWatched) {
         const { error } = await supabase.from('watched_episodes')
           .upsert({ user_id: user!.id, episode_id: episodeId }, { onConflict: 'user_id,episode_id' })
@@ -89,12 +104,8 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
     },
   })
 
-  // "Mark previous" — ask user if they want to mark all eps before current
-  const [pendingMark, setPendingMark] = useState<{ season: number; episode: number } | null>(null)
-
   const handleMarkNext = () => {
     if (!nextSeason) return
-    // If ep > 1 or season > 1, ask about previous
     const isFirstEp = nextSeason === 1 && nextEp === 1
     if (!isFirstEp && totalWatched === 0) {
       setPendingMark({ season: nextSeason, episode: nextEp })
@@ -109,67 +120,49 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
     setPendingMark(null)
 
     if (markAll) {
-      // Mark all episodes before this one
-      const batch: { season: number; episode: number }[] = []
       for (const s of showDetail.seasons.filter(se => se.season_number > 0)) {
         if (s.season_number > season) break
         const maxEp = s.season_number === season ? episode - 1 : s.episode_count
         for (let e = 1; e <= maxEp; e++) {
           if (!watchedSet.has(`${s.season_number}-${e}`)) {
-            batch.push({ season: s.season_number, episode: e })
+            await supabase.from('episodes')
+              .upsert({ show_id: showDbId, season: s.season_number, episode: e, name: null }, { onConflict: 'show_id,season,episode' })
+              .select('id').single()
+              .then(async ({ data }) => {
+                if (data) await supabase.from('watched_episodes')
+                  .upsert({ user_id: user!.id, episode_id: data.id }, { onConflict: 'user_id,episode_id' })
+              })
           }
         }
       }
-      // Insert all in sequence
-      for (const ep of batch) {
-        await supabase.from('episodes')
-          .upsert({ show_id: showDbId, season: ep.season, episode: ep.episode, name: null }, { onConflict: 'show_id,season,episode' })
-          .select('id').single()
-          .then(async ({ data }) => {
-            if (data) {
-              await supabase.from('watched_episodes')
-                .upsert({ user_id: user!.id, episode_id: data.id }, { onConflict: 'user_id,episode_id' })
-            }
-          })
-      }
       qc.invalidateQueries({ queryKey: ['watched-numbers', user?.id, showDbId] })
     }
-
-    // Always mark the target episode
     toggleMutation.mutate({ season, episode, markWatched: true })
   }
 
-  const allWatched = showDetail && nextSeason === 0
-
   return (
     <>
-      {/* Confirm previous episodes modal */}
+      {/* Mark previous modal */}
       {pendingMark && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
           <div className="bg-surface-2 border border-white/10 rounded-2xl w-full max-w-sm p-5 flex flex-col gap-4">
             <div>
               <h3 className="font-semibold text-base">Mark previous episodes?</h3>
               <p className="text-sm text-muted mt-1">
-                Do you want to mark all episodes before S{pendingMark.season} E{pendingMark.episode} as watched too?
+                Mark all episodes before S{pendingMark.season} E{pendingMark.episode} as watched?
               </p>
             </div>
             <div className="flex flex-col gap-2">
-              <button
-                onClick={() => confirmMarkPrevious(true)}
-                className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm"
-              >
+              <button onClick={() => confirmMarkPrevious(true)}
+                className="w-full py-3 rounded-xl bg-accent text-white font-semibold text-sm">
                 Yes, mark all previous
               </button>
-              <button
-                onClick={() => confirmMarkPrevious(false)}
-                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-sm"
-              >
+              <button onClick={() => confirmMarkPrevious(false)}
+                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-sm">
                 No, just this episode
               </button>
-              <button
-                onClick={() => setPendingMark(null)}
-                className="w-full py-2 text-sm text-muted"
-              >
+              <button onClick={() => setPendingMark(null)}
+                className="w-full py-2 text-sm text-muted">
                 Cancel
               </button>
             </div>
@@ -181,42 +174,63 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
         onClick={() => navigate(`/show/${tmdbId}?dbid=${showDbId}`)}
         className="flex items-center gap-3 bg-surface border border-white/5 rounded-xl p-3 w-full text-left active:scale-[0.98] transition-transform"
       >
-        {/* Poster */}
+        {/* Poster with loading shimmer */}
         <div className="w-12 h-16 rounded-lg overflow-hidden bg-surface-2 shrink-0">
-          {poster
-            ? <img src={poster} alt={show.name} className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-xl">📺</div>
-          }
+          {poster ? (
+            <>
+              {!imgLoaded && <PosterSkeleton />}
+              <img
+                src={poster}
+                alt={show.name}
+                // browser will cache this naturally; loading="lazy" avoids re-fetch on scroll
+                loading="lazy"
+                decoding="async"
+                onLoad={() => setImgLoaded(true)}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0 absolute'}`}
+              />
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-xl">📺</div>
+          )}
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold truncate">{show.name}</p>
+
           {allWatched ? (
             <p className="text-xs text-green-400 mt-0.5">✓ All episodes watched</p>
           ) : nextSeason ? (
-            <p className="text-xs text-muted mt-0.5">
-              Next: S{nextSeason} E{nextEp}
-            </p>
+            <p className="text-xs text-muted mt-0.5">Next: S{nextSeason} E{nextEp}</p>
           ) : (
             <p className="text-xs text-muted mt-0.5">Loading…</p>
           )}
-          {totalWatched > 0 && (
-            <p className="text-[10px] text-muted mt-0.5">{totalWatched} episode{totalWatched !== 1 ? 's' : ''} watched</p>
-          )}
+
+          {/* Watched / remaining */}
+          {totalEpisodes !== null ? (
+            <p className="text-[10px] text-muted mt-0.5">
+              {totalWatched}/{totalEpisodes} watched
+              {remaining !== null && remaining > 0 && (
+                <span className="ml-1 text-white/30">· {remaining} left</span>
+              )}
+            </p>
+          ) : totalWatched > 0 ? (
+            <p className="text-[10px] text-muted mt-0.5">{totalWatched} watched</p>
+          ) : null}
         </div>
 
-        {/* Mark next episode button */}
+        {/* Mark next button */}
         {!allWatched && nextSeason > 0 && (
           <button
             onClick={e => { e.stopPropagation(); handleMarkNext() }}
+            onMouseDown={e => e.preventDefault()}
             disabled={toggleMutation.isPending}
-            className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 hover:border-accent hover:bg-accent/10 transition-colors"
+            className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 hover:border-accent hover:bg-accent/10 active:scale-90 transition-all"
             title="Mark next episode as watched"
           >
             {toggleMutation.isPending
               ? <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin" />
-              : <span className="text-white/40 text-xs">✓</span>
+              : <span className="text-white/50 text-xs font-bold">✓</span>
             }
           </button>
         )}
@@ -225,7 +239,7 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
   )
 }
 
-// ─── Main tab ─────────────────────────────────────────────────────────────────
+// ─── Main ShowsTab ────────────────────────────────────────────────────────────
 export default function ShowsTab() {
   const { data: userShows, isLoading } = useUserShows()
   const navigate = useNavigate()
@@ -245,7 +259,6 @@ export default function ShowsTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Filter pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {(['watching', 'watchlist', 'completed', 'all'] as const).map(s => (
           <button
@@ -261,21 +274,19 @@ export default function ShowsTab() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <div className="flex flex-col items-center gap-2 py-16 text-center">
           <span className="text-5xl">📺</span>
           <p className="text-muted text-sm">
             {filter === 'watching' ? 'No series in progress' : 'Nothing here yet'}
           </p>
         </div>
       ) : filter === 'watching' ? (
-        // Watching tab — next episode UI
         <div className="flex flex-col gap-2">
           {filtered.map((us: any) => (
             <NextEpisodeCard key={us.shows.id} userShow={us} />
           ))}
         </div>
       ) : (
-        // Other tabs — poster grid
         <div className="grid grid-cols-3 gap-3">
           {filtered.map((us: any) => {
             const show = us.shows
@@ -288,7 +299,7 @@ export default function ShowsTab() {
               >
                 <div className="aspect-[2/3] rounded-xl overflow-hidden bg-surface-2">
                   {poster
-                    ? <img src={poster} alt={show.name} className="w-full h-full object-cover" />
+                    ? <img src={poster} alt={show.name} className="w-full h-full object-cover" loading="lazy" />
                     : <div className="w-full h-full flex items-center justify-center text-3xl">📺</div>
                   }
                 </div>
