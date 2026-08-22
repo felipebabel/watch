@@ -191,6 +191,10 @@ export default function ShowPage() {
         currentShowDbId = await upsertShow(tmdbId, show.name, show.poster_path)
         await setShowStatus(user!.id, currentShowDbId, 'watching')
         qc.invalidateQueries({ queryKey: ['user-shows'] })
+      } else if (currentShowDbId && userShow?.status === 'watchlist' && !watched) {
+        // Upgrade from watchlist → watching when first episode is marked
+        await setShowStatus(user!.id, currentShowDbId, 'watching')
+        qc.invalidateQueries({ queryKey: ['user-shows'] })
       }
       await toggleEpisodeWatched(user!.id, currentShowDbId, season, episode, name, watched)
     },
@@ -208,6 +212,9 @@ export default function ShowPage() {
       let currentShowDbId = showDbId
       if (!currentShowDbId) {
         currentShowDbId = await upsertShow(tmdbId, show.name, show.poster_path)
+        await setShowStatus(user!.id, currentShowDbId, 'watching')
+        qc.invalidateQueries({ queryKey: ['user-shows'] })
+      } else if (userShow?.status === 'watchlist') {
         await setShowStatus(user!.id, currentShowDbId, 'watching')
         qc.invalidateQueries({ queryKey: ['user-shows'] })
       }
