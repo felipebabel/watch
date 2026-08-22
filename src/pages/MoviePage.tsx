@@ -109,10 +109,10 @@ export default function MoviePage() {
           <button
             onClick={() => handleStatus('watched')}
             disabled={isPending}
-            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
+            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 border ${
               currentStatus === 'watched'
-                ? 'bg-green-500/20 border border-green-500/40 text-green-400'
-                : 'bg-accent text-white'
+                ? 'bg-accent/20 border-accent/40 text-accent'
+                : 'border-white/10 text-muted'
             }`}
           >
             {isPending && currentStatus !== 'watchlist'
