@@ -21,11 +21,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
+      // Clean leftover hash from OAuth redirect
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setLoading(false)
+      // Clean up the #access_token hash left by OAuth redirect
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
     })
 
     return () => subscription.unsubscribe()
