@@ -7,6 +7,7 @@ import { useAddShow, useRemoveShow, useUserShows } from '../hooks/useUserShows'
 import { supabase } from '../lib/supabase'
 import { upsertShow, setShowStatus } from '../lib/db'
 import type { WatchStatus } from '../types'
+import DesktopLayout from '../components/DesktopLayout'
 
 const STATUS_LABELS: Record<WatchStatus, string> = {
   watching: 'Watching',
@@ -281,7 +282,7 @@ export default function ShowPage() {
     toggleMutation.mutate({ season, episode, name, watched: false })
   }
 
-  const backdrop = tmdbImg(show?.backdrop_path, 'w500')
+  const backdrop = tmdbImg(show?.backdrop_path, 'original')
   const poster = tmdbImg(show?.poster_path, 'w342')
 
   if (isLoading) {
@@ -294,7 +295,8 @@ export default function ShowPage() {
   if (!show) return null
 
   return (
-    <div className="min-h-screen max-w-2xl mx-auto pb-10">
+    <DesktopLayout>
+    <div className="min-h-screen pb-10">
       {/* Back button — respects iPhone safe area */}
       <button
         onClick={() => navigate(-1)}
@@ -515,5 +517,6 @@ export default function ShowPage() {
         </div>
       </div>
     </div>
+    </DesktopLayout>
   )
 }

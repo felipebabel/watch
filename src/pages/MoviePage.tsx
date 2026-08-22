@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { tmdb, tmdbImg } from '../lib/tmdb'
 import { useUserMovies, useSetMovieStatus, useRemoveMovie } from '../hooks/useMovies'
+import DesktopLayout from '../components/DesktopLayout'
 
 function CheckIcon({ filled }: { filled: boolean }) {
   return (
@@ -65,7 +66,8 @@ export default function MoviePage() {
   const isPending = setStatus.isPending || removeMovie.isPending
 
   return (
-    <div className="min-h-screen max-w-2xl mx-auto pb-10">
+    <DesktopLayout>
+    <div className="min-h-screen pb-10">
       {/* Back */}
       <button
         onClick={() => navigate(-1)}
@@ -148,5 +150,6 @@ export default function MoviePage() {
         )}
       </div>
     </div>
+    </DesktopLayout>
   )
 }
