@@ -246,7 +246,9 @@ export default function ShowPage() {
 
   const hasPreviousUnwatched = (season: number, episode: number): boolean => {
     if (!show) return false
-    // If watchedMap is undefined (show not in list yet), treat as all unwatched
+    // Only treat as "no history" when show exists in DB — if brand new, no episodes watched
+    if (!showDbId) return false
+    // Use watchedMap if loaded, otherwise treat as empty (show exists but no watched episodes)
     const wm = watchedMap ?? new Map()
     for (const s of show.seasons.filter(se => se.season_number > 0)) {
       if (s.season_number > season) break
