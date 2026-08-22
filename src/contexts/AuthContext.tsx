@@ -40,57 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signInWithGoogle = async () => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-
-    if (!isMobile) {
-      const width = 500
-      const height = 600
-      const left = window.screenX + (window.outerWidth - width) / 2
-      const top = window.screenY + (window.outerHeight - height) / 2
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          skipBrowserRedirect: true,
-          queryParams: { prompt: 'select_account' },
-        },
-      })
-      if (error || !data?.url) return
-
-      const popup = window.open(data.url, 'google-signin',
-        `width=${width},height=${height},left=${left},top=${top}`)
-
-      // Listen for postMessage from popup when OAuth completes
-      const handleMessage = async (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return
-        if (event.data?.type !== 'supabase-oauth-callback') return
-        window.removeEventListener('message', handleMessage)
-        if (popup && !popup.closed) popup.close()
-        // Re-fetch session — Supabase stored it via the callback URL
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) setSession(session)
-      }
-      window.addEventListener('message', handleMessage)
-
-      // Fallback: if popup closed without postMessage, still check session
-      const timer = setInterval(async () => {
-        if (popup?.closed) {
-          clearInterval(timer)
-          window.removeEventListener('message', handleMessage)
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) setSession(session)
-        }
-      }, 500)
-    } else {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          queryParams: { prompt: 'select_account' },
-        },
-      })
-    }
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+        queryParams: { prompt: 'select_account' },
+      },
+    })
   }
 
   const signOut = async () => {

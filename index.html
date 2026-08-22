@@ -26,15 +26,6 @@
           window.history.replaceState(null, '', redirect)
         }
       })()
-      // If this page is loaded inside a popup (opened by the main app for OAuth),
-      // notify the opener and close the popup
-      ;(function() {
-        if (window.opener && window.opener !== window) {
-          // Send the current URL to the parent window
-          window.opener.postMessage({ type: 'supabase-oauth-callback', href: window.location.href }, window.location.origin)
-          window.close()
-        }
-      })()
     </script>
   </head>
   <body>
