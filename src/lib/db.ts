@@ -77,6 +77,20 @@ export async function getWatchedEpisodesForShow(userId: string, showId: string) 
   return new Set(data.map((r: any) => r.episode_id as string))
 }
 
+// Returns watched episodes as array of {season, episode} for a show
+export async function getWatchedEpisodeNumbers(userId: string, showId: string) {
+  const { data, error } = await supabase
+    .from('watched_episodes')
+    .select('episodes!inner(season, episode, show_id)')
+    .eq('user_id', userId)
+    .eq('episodes.show_id', showId)
+  if (error) throw error
+  return data.map((r: any) => ({
+    season: r.episodes.season as number,
+    episode: r.episodes.episode as number,
+  }))
+}
+
 // ─── Movies ───────────────────────────────────────────────────────────────────
 
 export async function upsertMovie(tmdbId: number, title: string, posterPath: string | null) {

@@ -16,12 +16,9 @@ export default function MoviesTab() {
 
   if (!movies?.length) {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-center">
+      <div className="flex flex-col items-center gap-2 py-16 text-center">
         <span className="text-5xl">🎬</span>
         <p className="text-muted text-sm">No movies watched yet</p>
-        <button onClick={() => navigate('/?tab=search')} className="text-accent text-sm">
-          Search for movies →
-        </button>
       </div>
     )
   }

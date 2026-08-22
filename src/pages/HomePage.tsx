@@ -7,9 +7,9 @@ import SearchTab from '../components/tabs/SearchTab'
 type Tab = 'shows' | 'movies' | 'search'
 
 const NAV_ITEMS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'shows',  label: 'TV Shows', icon: '📺' },
-  { id: 'search', label: 'Search',   icon: '🔍' },
-  { id: 'movies', label: 'Movies',   icon: '🎬' },
+  { id: 'shows',  label: 'Series',  icon: '📺' },
+  { id: 'search', label: 'Search',  icon: '🔍' },
+  { id: 'movies', label: 'Movies',  icon: '🎬' },
 ]
 
 export default function HomePage() {
