@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import ShowsTab from '../components/tabs/ShowsTab'
 import MoviesTab from '../components/tabs/MoviesTab'
@@ -71,11 +70,15 @@ function ProfileDropdown({
 
 export default function HomePage() {
   const { user, signOut } = useAuth()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const rawTab = searchParams.get('tab') as Tab | null
-  const tab: Tab = rawTab && ['shows', 'movies', 'search'].includes(rawTab) ? rawTab : 'shows'
+  const [tab, setTabState] = useState<Tab>(() => {
+    const saved = sessionStorage.getItem('activeTab') as Tab | null
+    return saved && ['shows', 'movies', 'search'].includes(saved) ? saved : 'shows'
+  })
 
-  const setTab = (t: Tab) => setSearchParams({ tab: t }, { replace: true })
+  const setTab = (t: Tab) => {
+    sessionStorage.setItem('activeTab', t)
+    setTabState(t)
+  }
 
   const avatar = user?.user_metadata?.avatar_url as string | undefined
   const name   = user?.user_metadata?.full_name as string ?? user?.email ?? ''
