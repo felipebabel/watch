@@ -98,6 +98,42 @@ export default function ShowPage() {
   const addShow = useAddShow()
   const removeShow = useRemoveShow()
 
+  // Mark ALL episodes of all seasons as watched
+  const markAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!show) return
+      // Ensure show exists in DB
+      const currentShowDbId = await upsertShow(tmdbId, show.name, show.poster_path)
+      await setShowStatus(user!.id, currentShowDbId, 'completed')
+      qc.invalidateQueries({ queryKey: ['user-shows'] })
+
+      // For each season, upsert all episodes and mark watched
+      for (const season of show.seasons.filter(s => s.season_number > 0)) {
+        // Fetch episode list from TMDB
+        const { episodes } = await import('../lib/tmdb').then(m =>
+          m.tmdb.getSeasonEpisodes(tmdbId, season.season_number)
+        )
+        for (const ep of episodes) {
+          const { data: epData } = await supabase
+            .from('episodes')
+            .upsert(
+              { show_id: currentShowDbId, season: ep.season_number, episode: ep.episode_number, name: ep.name },
+              { onConflict: 'show_id,season,episode' }
+            )
+            .select('id').single()
+          if (epData) {
+            await supabase.from('watched_episodes')
+              .upsert({ user_id: user!.id, episode_id: epData.id }, { onConflict: 'user_id,episode_id' })
+          }
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['watched-map', user?.id, showDbId] })
+      qc.invalidateQueries({ queryKey: ['watched-numbers', user?.id, showDbId] })
+    },
+  })
+
   const toggleMutation = useMutation({
     mutationFn: async ({ season, episode, name, watched }: {
       season: number; episode: number; name: string | null; watched: boolean
@@ -169,28 +205,44 @@ export default function ShowPage() {
 
         {/* Status */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {userShow ? (
-            <>
-              <div className="shrink-0 bg-accent/20 border border-accent/40 text-accent text-xs px-3 py-1.5 rounded-full">
-                ✓ {STATUS_LABELS[userShow.status as WatchStatus]}
-              </div>
-              <button
-                onClick={() => removeShow.mutate(showDbId)}
-                className="shrink-0 border border-white/10 text-muted text-xs px-3 py-1.5 rounded-full hover:border-red-500/40 hover:text-red-400 transition-colors"
-              >
-                Remove
-              </button>
-            </>
-          ) : (
-            (['watching', 'watchlist', 'completed'] as WatchStatus[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => addShow.mutate({ tmdbId, name: show.name, posterPath: show.poster_path, status: s })}
-                className="shrink-0 border border-white/10 text-muted text-xs px-3 py-1.5 rounded-full hover:border-accent/50 hover:text-accent transition-colors"
-              >
-                + {STATUS_LABELS[s]}
-              </button>
-            ))
+          {/* Loading overlay while marking all episodes */}
+          {markAllMutation.isPending && (
+            <div className="shrink-0 flex items-center gap-2 bg-accent/10 border border-accent/30 text-accent text-xs px-3 py-1.5 rounded-full">
+              <span className="w-3 h-3 border border-accent border-t-transparent rounded-full animate-spin" />
+              Marking all episodes…
+            </div>
+          )}
+
+          {!markAllMutation.isPending && (
+            userShow ? (
+              <>
+                <div className="shrink-0 bg-accent/20 border border-accent/40 text-accent text-xs px-3 py-1.5 rounded-full">
+                  ✓ {STATUS_LABELS[userShow.status as WatchStatus]}
+                </div>
+                <button
+                  onClick={() => removeShow.mutate(showDbId)}
+                  className="shrink-0 border border-white/10 text-muted text-xs px-3 py-1.5 rounded-full hover:border-red-500/40 hover:text-red-400 transition-colors"
+                >
+                  Remove
+                </button>
+              </>
+            ) : (
+              (['watching', 'watchlist', 'completed'] as WatchStatus[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    if (s === 'completed') {
+                      markAllMutation.mutate()
+                    } else {
+                      addShow.mutate({ tmdbId, name: show.name, posterPath: show.poster_path, status: s })
+                    }
+                  }}
+                  className="shrink-0 border border-white/10 text-muted text-xs px-3 py-1.5 rounded-full hover:border-accent/50 hover:text-accent transition-colors"
+                >
+                  + {STATUS_LABELS[s]}
+                </button>
+              ))
+            )
           )}
         </div>
 
