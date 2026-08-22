@@ -227,12 +227,14 @@ export default function ShowPage() {
   })
 
   const hasPreviousUnwatched = (season: number, episode: number): boolean => {
-    if (!show || !watchedMap) return false
+    if (!show) return false
+    // If watchedMap is undefined (show not in list yet), treat as all unwatched
+    const wm = watchedMap ?? new Map()
     for (const s of show.seasons.filter(se => se.season_number > 0)) {
       if (s.season_number > season) break
       const maxEp = s.season_number === season ? episode - 1 : s.episode_count
       for (let e = 1; e <= maxEp; e++) {
-        if (!watchedMap.has(`${s.season_number}-${e}`)) return true
+        if (!wm.has(`${s.season_number}-${e}`)) return true
       }
     }
     return false
