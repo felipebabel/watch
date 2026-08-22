@@ -16,18 +16,7 @@ export default function MoviePage() {
 
   const { data: watchedMovies } = useWatchedMovies()
   const toggleMovie = useToggleMovie()
-
   const isWatched = watchedMovies?.some((wm: any) => wm.movies.tmdb_id === tmdbId) ?? false
-
-  const handleToggle = () => {
-    if (!movie) return
-    toggleMovie.mutate({
-      tmdbId,
-      title: movie.title,
-      posterPath: movie.poster_path,
-      watched: isWatched,
-    })
-  }
 
   const backdrop = tmdbImg(movie?.backdrop_path, 'w500')
   const poster = tmdbImg(movie?.poster_path, 'w342')
@@ -39,35 +28,32 @@ export default function MoviePage() {
       </div>
     )
   }
-
   if (!movie) return null
 
   return (
-    <div className="min-h-screen max-w-md mx-auto pb-8">
-      {/* Back */}
+    <div className="min-h-screen max-w-2xl mx-auto pb-10">
+      {/* Back — respects iPhone notch */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-4 left-4 z-10 w-9 h-9 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white border border-white/10"
+        className="fixed left-4 z-20 w-9 h-9 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white border border-white/10 shadow-lg"
+        style={{ top: `max(env(safe-area-inset-top), 16px)` }}
       >
         ←
       </button>
 
       {/* Backdrop */}
       <div className="relative h-52 bg-surface-2">
-        {backdrop && (
-          <img src={backdrop} alt="" className="w-full h-full object-cover opacity-60" />
-        )}
+        {backdrop && <img src={backdrop} alt="" className="w-full h-full object-cover opacity-60" />}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
       </div>
 
       <div className="px-4 -mt-16 relative">
         <div className="flex gap-4">
-          <div className="w-24 h-36 rounded-xl overflow-hidden bg-surface-2 flex-shrink-0 border border-white/10">
-            {poster ? (
-              <img src={poster} alt={movie.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-3xl">🎬</div>
-            )}
+          <div className="w-24 h-36 rounded-xl overflow-hidden bg-surface-2 shrink-0 border border-white/10 shadow-xl">
+            {poster
+              ? <img src={poster} alt={movie.title} className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center text-3xl">🎬</div>
+            }
           </div>
           <div className="flex flex-col justify-end gap-1 pt-20">
             <h1 className="font-bold text-base leading-tight">{movie.title}</h1>
@@ -82,9 +68,14 @@ export default function MoviePage() {
           </div>
         </div>
 
-        {/* Watch button */}
+        {/* Watched toggle */}
         <button
-          onClick={handleToggle}
+          onClick={() => movie && toggleMovie.mutate({
+            tmdbId,
+            title: movie.title,
+            posterPath: movie.poster_path,
+            watched: isWatched,
+          })}
           disabled={toggleMovie.isPending}
           className={`mt-5 w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
             isWatched
@@ -95,15 +86,13 @@ export default function MoviePage() {
           {toggleMovie.isPending
             ? '...'
             : isWatched
-              ? '✓ Assistido — clique para desmarcar'
-              : 'Marcar como assistido'}
+              ? '✓ Watched — tap to unmark'
+              : 'Mark as watched'}
         </button>
 
-        {/* Overview */}
         {movie.overview && (
           <p className="mt-5 text-sm text-white/70 leading-relaxed">{movie.overview}</p>
         )}
-
         {movie.tagline && (
           <p className="mt-3 text-sm text-muted italic">"{movie.tagline}"</p>
         )}

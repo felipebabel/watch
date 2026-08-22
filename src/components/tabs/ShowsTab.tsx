@@ -5,10 +5,10 @@ import { tmdbImg } from '../../lib/tmdb'
 import type { WatchStatus } from '../../types'
 
 const STATUS_LABELS: Record<WatchStatus, string> = {
-  watching: 'Assistindo',
-  completed: 'Concluído',
-  dropped: 'Abandonado',
-  watchlist: 'Quero ver',
+  watching: 'Watching',
+  completed: 'Completed',
+  dropped: 'Dropped',
+  watchlist: 'Want to Watch',
 }
 
 export default function ShowsTab() {
@@ -30,19 +30,16 @@ export default function ShowsTab() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Filter pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {(['watching', 'watchlist', 'completed', 'all'] as const).map((s) => (
+        {(['watching', 'watchlist', 'completed', 'all'] as const).map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
-            className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
-              filter === s
-                ? 'bg-accent border-accent text-white'
-                : 'border-white/10 text-muted hover:text-white'
+            className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              filter === s ? 'bg-accent border-accent text-white' : 'border-white/10 text-muted hover:text-white'
             }`}
           >
-            {s === 'all' ? 'Todas' : STATUS_LABELS[s]}
+            {s === 'all' ? 'All' : STATUS_LABELS[s]}
           </button>
         ))}
       </div>
@@ -51,10 +48,10 @@ export default function ShowsTab() {
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <span className="text-5xl">📺</span>
           <p className="text-muted text-sm">
-            {filter === 'watching' ? 'Nenhuma série em andamento' : 'Nenhuma série aqui ainda'}
+            {filter === 'watching' ? 'No shows in progress' : 'Nothing here yet'}
           </p>
           <button onClick={() => navigate('/?tab=search')} className="text-accent text-sm">
-            Buscar séries →
+            Search for shows →
           </button>
         </div>
       ) : (
@@ -69,11 +66,10 @@ export default function ShowsTab() {
                 className="flex flex-col gap-1.5 text-left active:scale-95 transition-transform"
               >
                 <div className="aspect-[2/3] rounded-xl overflow-hidden bg-surface-2">
-                  {poster ? (
-                    <img src={poster} alt={show.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl">📺</div>
-                  )}
+                  {poster
+                    ? <img src={poster} alt={show.name} className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-3xl">📺</div>
+                  }
                 </div>
                 <p className="text-xs font-medium leading-tight line-clamp-2">{show.name}</p>
                 <span className="text-[10px] text-muted">{STATUS_LABELS[us.status as WatchStatus]}</span>

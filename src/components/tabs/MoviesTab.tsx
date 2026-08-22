@@ -18,12 +18,9 @@ export default function MoviesTab() {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <span className="text-5xl">🎬</span>
-        <p className="text-muted text-sm">Nenhum filme assistido ainda</p>
-        <button
-          onClick={() => navigate('/search')}
-          className="text-accent text-sm"
-        >
-          Buscar filmes →
+        <p className="text-muted text-sm">No movies watched yet</p>
+        <button onClick={() => navigate('/?tab=search')} className="text-accent text-sm">
+          Search for movies →
         </button>
       </div>
     )
@@ -37,18 +34,17 @@ export default function MoviesTab() {
         return (
           <button
             key={movie.id}
-            onClick={() => navigate(`/movie/${movie.tmdb_id}?dbid=${movie.id}`)}
-            className="flex flex-col gap-1.5 text-left"
+            onClick={() => navigate(`/movie/${movie.tmdb_id}`)}
+            className="flex flex-col gap-1.5 text-left active:scale-95 transition-transform"
           >
             <div className="aspect-[2/3] rounded-xl overflow-hidden bg-surface-2">
-              {poster ? (
-                <img src={poster} alt={movie.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-3xl">🎬</div>
-              )}
+              {poster
+                ? <img src={poster} alt={movie.title} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-3xl">🎬</div>
+              }
             </div>
             <p className="text-xs font-medium leading-tight line-clamp-2">{movie.title}</p>
-            <span className="text-[10px] text-green-400">✓ Assistido</span>
+            <span className="text-[10px] text-green-400">✓ Watched</span>
           </button>
         )
       })}
