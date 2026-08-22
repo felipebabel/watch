@@ -103,20 +103,41 @@ export async function upsertMovie(tmdbId: number, title: string, posterPath: str
   return data.id as string
 }
 
-export async function markMovieWatched(userId: string, movieId: string) {
+export type MovieStatus = 'watched' | 'watchlist'
+
+export async function setMovieStatus(userId: string, movieId: string, status: MovieStatus) {
   const { error } = await supabase
-    .from('watched_movies')
-    .upsert({ user_id: userId, movie_id: movieId }, { onConflict: 'user_id,movie_id' })
+    .from('user_movies')
+    .upsert({ user_id: userId, movie_id: movieId, status }, { onConflict: 'user_id,movie_id' })
   if (error) throw error
 }
 
-export async function unmarkMovieWatched(userId: string, movieId: string) {
+export async function removeMovieStatus(userId: string, movieId: string) {
   const { error } = await supabase
-    .from('watched_movies')
+    .from('user_movies')
     .delete()
     .eq('user_id', userId)
     .eq('movie_id', movieId)
   if (error) throw error
+}
+
+export async function getUserMovies(userId: string) {
+  const { data, error } = await supabase
+    .from('user_movies')
+    .select('status, movies(id, tmdb_id, title, poster_path)')
+    .eq('user_id', userId)
+    .order('movie_id')
+  if (error) throw error
+  return data
+}
+
+// Legacy — kept for backward compat, maps to getUserMovies filtered by watched
+export async function markMovieWatched(userId: string, movieId: string) {
+  await setMovieStatus(userId, movieId, 'watched')
+}
+
+export async function unmarkMovieWatched(userId: string, movieId: string) {
+  await removeMovieStatus(userId, movieId)
 }
 
 export async function getWatchedMovies(userId: string) {

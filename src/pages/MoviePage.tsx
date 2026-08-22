@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { tmdb, tmdbImg } from '../lib/tmdb'
-import { useWatchedMovies, useToggleMovie } from '../hooks/useMovies'
+import { useUserMovies, useSetMovieStatus, useRemoveMovie } from '../hooks/useMovies'
 
 export default function MoviePage() {
   const { id } = useParams<{ id: string }>()
@@ -14,12 +14,15 @@ export default function MoviePage() {
     enabled: !!tmdbId,
   })
 
-  const { data: watchedMovies } = useWatchedMovies()
-  const toggleMovie = useToggleMovie()
-  const isWatched = watchedMovies?.some((wm: any) => wm.movies.tmdb_id === tmdbId) ?? false
+  const { data: userMovies } = useUserMovies()
+  const setStatus = useSetMovieStatus()
+  const removeMovie = useRemoveMovie()
+
+  const userMovie = userMovies?.find((m: any) => m.movies?.tmdb_id === tmdbId)
+  const currentStatus = userMovie?.status as 'watched' | 'watchlist' | undefined
 
   const backdrop = tmdbImg(movie?.backdrop_path, 'w500')
-  const poster = tmdbImg(movie?.poster_path, 'w342')
+  const poster   = tmdbImg(movie?.poster_path, 'w342')
 
   if (isLoading) {
     return (
@@ -30,9 +33,19 @@ export default function MoviePage() {
   }
   if (!movie) return null
 
+  const handleStatus = (status: 'watched' | 'watchlist') => {
+    if (currentStatus === status) {
+      removeMovie.mutate(tmdbId)
+    } else {
+      setStatus.mutate({ tmdbId, title: movie.title, posterPath: movie.poster_path, status })
+    }
+  }
+
+  const isPending = setStatus.isPending || removeMovie.isPending
+
   return (
     <div className="min-h-screen max-w-2xl mx-auto pb-10">
-      {/* Back — respects iPhone notch */}
+      {/* Back */}
       <button
         onClick={() => navigate(-1)}
         className="fixed left-4 z-20 w-9 h-9 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white border border-white/10 shadow-lg"
@@ -48,6 +61,7 @@ export default function MoviePage() {
       </div>
 
       <div className="px-4 -mt-16 relative">
+        {/* Poster + info */}
         <div className="flex gap-4">
           <div className="w-24 h-36 rounded-xl overflow-hidden bg-surface-2 shrink-0 border border-white/10 shadow-xl">
             {poster
@@ -68,27 +82,32 @@ export default function MoviePage() {
           </div>
         </div>
 
-        {/* Watched toggle */}
-        <button
-          onClick={() => movie && toggleMovie.mutate({
-            tmdbId,
-            title: movie.title,
-            posterPath: movie.poster_path,
-            watched: isWatched,
-          })}
-          disabled={toggleMovie.isPending}
-          className={`mt-5 w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
-            isWatched
-              ? 'bg-green-500/20 border border-green-500/40 text-green-400'
-              : 'bg-accent hover:bg-accent-hover text-white'
-          }`}
-        >
-          {toggleMovie.isPending
-            ? '...'
-            : isWatched
-              ? '✓ Watched — tap to unmark'
-              : 'Mark as watched'}
-        </button>
+        {/* Status buttons */}
+        <div className="mt-5 flex gap-2">
+          <button
+            onClick={() => handleStatus('watched')}
+            disabled={isPending}
+            className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
+              currentStatus === 'watched'
+                ? 'bg-green-500/20 border border-green-500/40 text-green-400'
+                : 'bg-accent hover:bg-accent-hover text-white'
+            }`}
+          >
+            {isPending && currentStatus !== 'watchlist' ? '...' : currentStatus === 'watched' ? '✓ Watched' : 'Mark as watched'}
+          </button>
+
+          <button
+            onClick={() => handleStatus('watchlist')}
+            disabled={isPending}
+            className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 border ${
+              currentStatus === 'watchlist'
+                ? 'bg-accent/20 border-accent/40 text-accent'
+                : 'border-white/10 text-muted'
+            }`}
+          >
+            {isPending && currentStatus !== 'watched' ? '...' : currentStatus === 'watchlist' ? '✓ Watchlist' : '+ Watchlist'}
+          </button>
+        </div>
 
         {movie.overview && (
           <p className="mt-5 text-sm text-white/70 leading-relaxed">{movie.overview}</p>
