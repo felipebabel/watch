@@ -15,15 +15,6 @@ const STATUS_LABELS: Record<WatchStatus, string> = {
   watchlist: 'Want to Watch',
 }
 
-// Animated skeleton shimmer for image loading
-function PosterSkeleton() {
-  return (
-    <div className="w-full h-full bg-surface-2 flex items-center justify-center">
-      <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-    </div>
-  )
-}
-
 // ─── Next episode card ────────────────────────────────────────────────────────
 function NextEpisodeCard({ userShow }: { userShow: any }) {
   const { user } = useAuth()
@@ -175,18 +166,21 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
         className="flex items-center gap-3 bg-surface border border-white/5 rounded-xl p-3 w-full text-left active:scale-[0.98] transition-transform"
       >
         {/* Poster with loading shimmer */}
-        <div className="w-12 h-16 rounded-lg overflow-hidden bg-surface-2 shrink-0">
+        <div className="w-12 h-16 rounded-lg overflow-hidden bg-surface-2 shrink-0 relative">
           {poster ? (
             <>
-              {!imgLoaded && <PosterSkeleton />}
+              {!imgLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+                </div>
+              )}
               <img
                 src={poster}
                 alt={show.name}
-                // browser will cache this naturally; loading="lazy" avoids re-fetch on scroll
                 loading="lazy"
                 decoding="async"
                 onLoad={() => setImgLoaded(true)}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0 absolute'}`}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
               />
             </>
           ) : (
