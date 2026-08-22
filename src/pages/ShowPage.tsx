@@ -374,11 +374,11 @@ export default function ShowPage() {
         </div>
       )}
 
-      {/* Backdrop — tall enough to cover poster + status buttons */}
-      <div className="relative h-80 bg-surface-2">
+      {/* Backdrop — poster + title overlay at bottom */}
+      <div className="relative h-72 bg-surface-2">
         {backdrop && <img src={backdrop} alt="" className="w-full h-full object-cover opacity-50" />}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-background" />
-        {/* Back button inside the backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-background" />
+        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 z-10 w-9 h-9 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center text-white border border-white/10 shadow-lg"
@@ -386,30 +386,30 @@ export default function ShowPage() {
         >
           ←
         </button>
-      </div>
 
-      <div className="px-4 -mt-32 relative">
-        {/* Poster + info */}
-        <div className="flex gap-4">
-          <div className="w-24 h-36 rounded-xl overflow-hidden bg-surface-2 shrink-0 border border-white/10 shadow-xl">
+        {/* Poster + title inside backdrop, bottom-aligned */}
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 flex items-end gap-4">
+          <div className="w-28 h-40 rounded-xl overflow-hidden bg-surface-2 shrink-0 border border-white/10 shadow-2xl">
             {poster
               ? <img src={poster} alt={show.name} className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center text-3xl">📺</div>
             }
           </div>
-          <div className="flex flex-col justify-end gap-1 pt-32">
-            <h1 className="font-bold text-base leading-tight">{show.name}</h1>
-            <p className="text-xs text-muted">
+          <div className="flex flex-col gap-1 pb-1">
+            <h1 className="font-bold text-lg leading-tight drop-shadow-lg">{show.name}</h1>
+            <p className="text-xs text-white/70">
               {show.first_air_date?.slice(0, 4)} · {show.number_of_seasons} season{show.number_of_seasons !== 1 ? 's' : ''}
             </p>
             <div className="flex items-center gap-1">
               <span className="text-yellow-400 text-xs">★</span>
-              <span className="text-xs text-muted">{show.vote_average.toFixed(1)}</span>
+              <span className="text-xs text-white/70">{show.vote_average.toFixed(1)}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Status */}
+      <div className="px-4 pt-4 relative">
+        {/* Status — directly below backdrop */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           {/* Loading overlay while marking all episodes */}
           {markAllMutation.isPending && (
