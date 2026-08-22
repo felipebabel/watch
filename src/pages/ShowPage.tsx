@@ -12,7 +12,7 @@ const STATUS_LABELS: Record<WatchStatus, string> = {
   watching: 'Watching',
   completed: 'Completed',
   dropped: 'Dropped',
-  watchlist: 'Want to Watch',
+  watchlist: 'Watchlist',
 }
 
 async function fetchWatchedMap(userId: string, showDbId: string) {
@@ -221,7 +221,7 @@ export default function ShowPage() {
                 </div>
                 <button
                   onClick={() => removeShow.mutate(showDbId)}
-                  className="shrink-0 border border-white/10 text-muted text-xs px-3 py-1.5 rounded-full hover:border-red-500/40 hover:text-red-400 transition-colors"
+                  className="shrink-0 border border-white/10 text-muted text-xs px-3 py-1.5 rounded-full active:border-red-500/40 active:text-red-400 transition-colors"
                 >
                   Remove
                 </button>

@@ -52,7 +52,7 @@ export default function SearchTab() {
               type === t ? 'bg-accent text-white' : 'text-muted'
             }`}
           >
-            {t === 'tv' ? '📺 TV Shows' : '🎬 Movies'}
+            {t === 'tv' ? '📺 Series' : '🎬 Movies'}
           </button>
         ))}
       </div>

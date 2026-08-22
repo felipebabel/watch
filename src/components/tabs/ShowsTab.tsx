@@ -12,7 +12,7 @@ const STATUS_LABELS: Record<WatchStatus, string> = {
   watching:  'Watching',
   completed: 'Completed',
   dropped:   'Dropped',
-  watchlist: 'Want to Watch',
+  watchlist: 'Watchlist',
 }
 
 // ─── Next episode card ────────────────────────────────────────────────────────
@@ -220,7 +220,7 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
             onClick={e => { e.stopPropagation(); handleMarkNext() }}
             onMouseDown={e => e.preventDefault()}
             disabled={toggleMutation.isPending}
-            className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 hover:border-accent hover:bg-accent/10 active:scale-90 transition-all"
+            className="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 active:scale-90 active:border-accent active:bg-accent/10 transition-all"
             title="Mark next episode as watched"
           >
             {toggleMutation.isPending
