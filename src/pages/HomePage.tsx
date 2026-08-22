@@ -82,7 +82,7 @@ export default function HomePage() {
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-white/5 px-4 py-6 gap-2 sticky top-0 h-screen bg-[#27272a]">
         <div className="flex items-center justify-center px-2 mb-6 h-[55px]">
-          <img src="/banner.jpg" alt="WatchTime" className="h-[40px] w-auto object-contain" />
+          <img src="/banner.jpg" alt="WatchTime" className="h-[55px] w-auto object-contain" />
         </div>
 
         {NAV_ITEMS.map(({ id, label, icon }) => (
