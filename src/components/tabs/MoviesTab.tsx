@@ -64,9 +64,6 @@ export default function MoviesTab() {
                   }
                 </div>
                 <p className="text-xs font-medium leading-tight line-clamp-2">{movie.title}</p>
-                <span className={`text-[10px] ${um.status === 'watched' ? 'text-green-400' : 'text-accent'}`}>
-                  {um.status === 'watched' ? '✓ Watched' : '📋 Watchlist'}
-                </span>
               </button>
             )
           })}
