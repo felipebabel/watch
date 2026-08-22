@@ -24,8 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Listen for auth changes — including OAuth redirect back
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('auth event:', event, !!session)
       setSession(session)
       setLoading(false)
     })
