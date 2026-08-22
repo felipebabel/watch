@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tmdb, tmdbImg } from '../lib/tmdb'
@@ -71,6 +71,7 @@ export default function ShowPage() {
 
   const tmdbId = parseInt(id ?? '0')
   const [selectedSeason, setSelectedSeason] = useState(1)
+  const [autoSelectedSeason, setAutoSelectedSeason] = useState(false)
   const [pendingEpisode, setPendingEpisode] = useState<{
     season: number; episode: number; name: string | null
   } | null>(null)
@@ -115,9 +116,34 @@ export default function ShowPage() {
     queryKey: ['watched-map', user?.id, showDbId],
     queryFn: () => fetchWatchedMap(user!.id, showDbId),
     enabled: !!user && !!showDbId,
-    staleTime: 0, // always refetch after invalidation
+    staleTime: 0,
   })
 
+  // Auto-select the season with the last watched episode (runs once when data loads)
+  useEffect(() => {
+    if (autoSelectedSeason || !show || !watchedMap || watchedMap.size === 0) return
+    const seasons = show.seasons.filter(s => s.season_number > 0)
+    // Find the highest season that has at least one watched episode
+    let bestSeason = 1
+    for (const s of seasons) {
+      for (let e = 1; e <= s.episode_count; e++) {
+        if (watchedMap.has(`${s.season_number}-${e}`)) {
+          bestSeason = s.season_number
+        }
+      }
+    }
+    setSelectedSeason(bestSeason)
+    setAutoSelectedSeason(true)
+  }, [show, watchedMap, autoSelectedSeason])
+
+  // Helper: check if a season is fully watched
+  const isSeasonComplete = (seasonNumber: number, episodeCount: number): boolean => {
+    if (!watchedMap) return false
+    for (let e = 1; e <= episodeCount; e++) {
+      if (!watchedMap.has(`${seasonNumber}-${e}`)) return false
+    }
+    return true
+  }
   const addShow = useAddShow()
   const removeShow = useRemoveShow()
 
@@ -459,19 +485,26 @@ export default function ShowPage() {
 
         {/* Season tabs */}
         <div className="mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {show.seasons.filter(s => s.season_number > 0).map(season => (
-            <button
-              key={season.season_number}
-              onClick={() => setSelectedSeason(season.season_number)}
-              className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                selectedSeason === season.season_number
-                  ? 'bg-accent border-accent text-white'
-                  : 'border-white/10 text-muted'
-              }`}
-            >
-              S{season.season_number}
-            </button>
-          ))}
+          {show.seasons.filter(s => s.season_number > 0).map(season => {
+            const complete = isSeasonComplete(season.season_number, season.episode_count)
+            const isSelected = selectedSeason === season.season_number
+            return (
+              <button
+                key={season.season_number}
+                onClick={() => setSelectedSeason(season.season_number)}
+                className={`shrink-0 flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  isSelected
+                    ? 'bg-accent border-accent text-white'
+                    : complete
+                      ? 'border-green-500/40 text-green-400 bg-green-500/10'
+                      : 'border-white/10 text-muted'
+                }`}
+              >
+                S{season.season_number}
+                {complete && !isSelected && <span className="text-[10px]">✓</span>}
+              </button>
+            )
+          })}
         </div>
 
         {/* Episodes */}
