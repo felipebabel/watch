@@ -81,8 +81,8 @@ export default function HomePage() {
 
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-white/5 px-4 py-6 gap-2 sticky top-0 h-screen bg-[#27272a]">
-        <div className="flex items-center px-2 mb-6 h-[55px]">
-          <img src="/logo_bold.jpg" alt="WatchTime" className="h-[55px] w-auto object-contain" />
+        <div className="flex items-center justify-center px-2 mb-6 h-[55px]">
+          <img src="/banner.jpg" alt="WatchTime" className="h-[40px] w-auto object-contain" />
         </div>
 
         {NAV_ITEMS.map(({ id, label, icon }) => (
@@ -121,8 +121,8 @@ export default function HomePage() {
 
         {/* Mobile header */}
         <header className="md:hidden flex items-center justify-between px-6 border-b border-white/5 sticky top-0 bg-[#27272a] z-10 h-[55px]" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="flex items-center">
-            <img src="/logo_bold.jpg" alt="WatchTime" className="h-[55px] w-auto object-contain" />
+          <div className="flex-1 flex items-center justify-center">
+            <img src="/banner.jpg" alt="WatchTime" className="h-[40px] w-auto object-contain" />
           </div>
           <ProfileDropdown
             avatar={avatar}
