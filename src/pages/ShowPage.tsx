@@ -75,7 +75,6 @@ export default function ShowPage() {
   const [pendingEpisode, setPendingEpisode] = useState<{
     season: number; episode: number; name: string | null
   } | null>(null)
-  const [showRemoveModal, setShowRemoveModal] = useState(false)
 
   const { data: show, isLoading } = useQuery({
     queryKey: ['show', tmdbId],
@@ -359,47 +358,6 @@ export default function ShowPage() {
         </div>
       )}
 
-      {/* Remove show modal */}
-      {showRemoveModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
-          <div className="bg-surface-2 border border-white/10 rounded-2xl w-full max-w-sm p-5 flex flex-col gap-4">
-            <div>
-              <h3 className="font-semibold text-base">Remove series?</h3>
-              <p className="text-sm text-muted mt-1">
-                Do you want to keep your watched episodes history or clear it?
-              </p>
-            </div>
-            {removeWithEpisodesMutation.isPending ? (
-              <div className="flex items-center justify-center py-2 gap-2 text-sm text-muted">
-                <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                Removing…
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => { setShowRemoveModal(false); removeWithEpisodesMutation.mutate(false) }}
-                  className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-semibold"
-                >
-                  Remove but keep history
-                </button>
-                <button
-                  onClick={() => { setShowRemoveModal(false); removeWithEpisodesMutation.mutate(true) }}
-                  className="w-full py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold"
-                >
-                  Remove and clear history
-                </button>
-                <button
-                  onClick={() => setShowRemoveModal(false)}
-                  className="w-full py-2 text-sm text-muted"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Backdrop — poster + title overlay at bottom */}
       <div className="relative h-72 md:h-[432px] bg-surface-2">
         {backdrop && <img src={backdrop} alt="" className="w-full h-full object-cover opacity-50" />}
@@ -452,7 +410,8 @@ export default function ShowPage() {
                   ✓ {STATUS_LABELS[userShow.status as WatchStatus]}
                 </div>
                 <button
-                  onClick={() => setShowRemoveModal(true)}
+                  onClick={() => removeWithEpisodesMutation.mutate(true)}
+                  disabled={removeWithEpisodesMutation.isPending}
                   className="shrink-0 border border-white/10 text-muted text-xs px-3 py-1.5 rounded-full active:border-red-500/40 active:text-red-400 transition-colors"
                 >
                   Remove
