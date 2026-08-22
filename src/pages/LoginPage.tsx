@@ -19,11 +19,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm flex flex-col items-center gap-8">
         {/* Logo */}
         <div className="flex flex-col items-center gap-4">
-          <img src="/apple-touch-icon.png" alt="WatchTime" className="w-20 h-20 rounded-2xl shadow-2xl" />
-          <div className="text-center">
-            <h1 className="text-3xl font-bold tracking-tight">WatchTime</h1>
-            <p className="text-muted text-sm mt-1">Your personal TV & movie diary</p>
-          </div>
+          <img src="/banner.jpg" alt="WatchTime" className="w-full max-w-xs rounded-2xl shadow-2xl object-cover" />
         </div>
 
         {/* Features */}
