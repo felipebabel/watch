@@ -375,7 +375,7 @@ export default function ShowPage() {
       )}
 
       {/* Backdrop — poster + title overlay at bottom */}
-      <div className="relative h-72 bg-surface-2">
+      <div className="relative h-72 md:h-[432px] bg-surface-2">
         {backdrop && <img src={backdrop} alt="" className="w-full h-full object-cover opacity-50" />}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-background" />
         {/* Back button */}
