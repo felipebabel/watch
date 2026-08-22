@@ -37,16 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: {
         redirectTo: window.location.origin,
         queryParams: {
-          prompt: 'select_account', // always show account picker
+          prompt: 'select_account',
         },
       },
     })
   }
 
   const signOut = async () => {
+    // signOut clears localStorage tokens — onAuthStateChange fires with null
+    // which triggers the ProtectedRoute redirect to /login via React Router
     await supabase.auth.signOut()
-    // Force Google account picker on next login
-    window.location.href = '/login'
   }
 
   return (

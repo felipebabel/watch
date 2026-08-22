@@ -23,6 +23,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   const { user, loading } = useAuth()
 
+  // While loading, show spinner globally
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -33,14 +34,12 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={user ? <Navigate to="/" replace /> : <LoginPage />}
-      />
+      {/* If logged in, redirect /login to home */}
+      <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
       <Route path="/show/:id" element={<ProtectedRoute><ShowPage /></ProtectedRoute>} />
       <Route path="/movie/:id" element={<ProtectedRoute><MoviePage /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
     </Routes>
   )
 }
