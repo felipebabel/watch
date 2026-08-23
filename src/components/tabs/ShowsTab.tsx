@@ -36,11 +36,11 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
   })
 
   // Watched episode numbers for this show
-  const { data: watched = [] } = useQuery({
+  const { data: watched = [], isLoading: watchedLoading } = useQuery({
     queryKey: ['watched-numbers', user?.id, showDbId],
     queryFn: () => getWatchedEpisodeNumbers(user!.id, showDbId),
     enabled: !!user && !!showDbId,
-    staleTime: 0, // always refetch after invalidation
+    staleTime: 0,
   })
 
   const watchedSet = new Set(watched.map((w: any) => `${w.season}-${w.episode}`))
@@ -193,7 +193,9 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold truncate">{show.name}</p>
 
-          {allWatched ? (
+          {watchedLoading ? (
+            <p className="text-xs text-muted mt-0.5"> </p>
+          ) : allWatched ? (
             <p className="text-xs text-green-400 mt-0.5">✓ All episodes watched</p>
           ) : nextSeason ? (
             <p className="text-xs text-muted mt-0.5">Next: S{nextSeason} E{nextEp}</p>
@@ -201,15 +203,15 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
             <p className="text-xs text-muted mt-0.5">Loading…</p>
           )}
 
-          {/* Watched / remaining */}
-          {totalEpisodes !== null ? (
+          {/* Watched / remaining — hide while loading to avoid stale numbers */}
+          {!watchedLoading && totalEpisodes !== null ? (
             <p className="text-[10px] text-muted mt-0.5">
               {totalWatched}/{totalEpisodes} watched
               {remaining !== null && remaining > 0 && (
                 <span className="ml-1 text-white/30">· {remaining} left</span>
               )}
             </p>
-          ) : totalWatched > 0 ? (
+          ) : !watchedLoading && totalWatched > 0 ? (
             <p className="text-[10px] text-muted mt-0.5">{totalWatched} watched</p>
           ) : null}
         </div>
