@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useUserMovies } from '../../hooks/useMovies'
 import { tmdbImg } from '../../lib/tmdb'
 
-type Filter = 'watched' | 'watchlist' | 'all'
+type Filter = 'watched' | 'watchlist'
 
 export default function MoviesTab() {
   const { data: movies, isLoading } = useUserMovies()
@@ -18,15 +18,13 @@ export default function MoviesTab() {
     )
   }
 
-  const filtered = filter === 'all'
-    ? movies ?? []
-    : (movies ?? []).filter((m: any) => m.status === filter)
+  const filtered = (movies ?? []).filter((m: any) => m.status === filter)
 
   return (
     <div className="flex flex-col gap-4">
       {/* Filter pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {(['watched', 'watchlist', 'all'] as Filter[]).map(f => (
+        {(['watched', 'watchlist'] as Filter[]).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -34,7 +32,7 @@ export default function MoviesTab() {
               filter === f ? 'bg-accent border-accent text-white' : 'border-white/10 text-muted hover:text-white'
             }`}
           >
-            {f === 'all' ? 'All' : f === 'watched' ? 'Watched' : 'Watchlist'}
+            {f === 'watched' ? 'Watched' : 'Watchlist'}
           </button>
         ))}
       </div>
@@ -43,7 +41,7 @@ export default function MoviesTab() {
         <div className="flex flex-col items-center gap-2 py-16 text-center">
           <span className="text-5xl">🎬</span>
           <p className="text-muted text-sm">
-            {filter === 'watched' ? 'No movies watched yet' : filter === 'watchlist' ? 'Watchlist is empty' : 'No movies added yet'}
+            {filter === 'watched' ? 'No movies watched yet' : 'Watchlist is empty'}
           </p>
         </div>
       ) : (

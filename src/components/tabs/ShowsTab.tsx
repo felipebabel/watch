@@ -240,7 +240,7 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
 export default function ShowsTab() {
   const { data: userShows, isLoading } = useUserShows()
   const navigate = useNavigate()
-  const [filter, setFilter] = useState<WatchStatus | 'all'>('watching')
+  const [filter, setFilter] = useState<WatchStatus>('watching')
 
   if (isLoading) {
     return (
@@ -250,14 +250,12 @@ export default function ShowsTab() {
     )
   }
 
-  const filtered = filter === 'all'
-    ? userShows ?? []
-    : (userShows ?? []).filter((s: any) => s.status === filter)
+  const filtered = userShows?.filter((s: any) => s.status === filter) ?? []
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {(['watching', 'watchlist', 'completed', 'all'] as const).map(s => (
+        {(['watching', 'watchlist', 'completed'] as const).map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -265,7 +263,7 @@ export default function ShowsTab() {
               filter === s ? 'bg-accent border-accent text-white' : 'border-white/10 text-muted hover:text-white'
             }`}
           >
-            {s === 'all' ? 'All' : STATUS_LABELS[s]}
+            {STATUS_LABELS[s]}
           </button>
         ))}
       </div>
