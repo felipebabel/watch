@@ -47,7 +47,7 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
 
   // Total episodes across all seasons (excluding specials)
   const totalEpisodes = showDetail
-    ? showDetail.seasons.filter(s => s.season_number > 0).reduce((sum, s) => sum + s.episode_count, 0)
+    ? showDetail.seasons.filter(s => s.season_number > 0 && s.episode_count > 0).reduce((sum, s) => sum + s.episode_count, 0)
     : null
 
   const totalWatched = watched.length
@@ -57,7 +57,7 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
   let nextSeason = 0
   let nextEp = 0
   if (showDetail) {
-    outer: for (const season of showDetail.seasons.filter(s => s.season_number > 0)) {
+    outer: for (const season of showDetail.seasons.filter(s => s.season_number > 0 && s.episode_count > 0)) {
       for (let e = 1; e <= season.episode_count; e++) {
         if (!watchedSet.has(`${season.season_number}-${e}`)) {
           nextSeason = season.season_number
@@ -112,7 +112,7 @@ function NextEpisodeCard({ userShow }: { userShow: any }) {
     setPendingMark(null)
 
     if (markAll) {
-      for (const s of showDetail.seasons.filter(se => se.season_number > 0)) {
+      for (const s of showDetail.seasons.filter(se => se.season_number > 0 && se.episode_count > 0)) {
         if (s.season_number > season) break
         const maxEp = s.season_number === season ? episode - 1 : s.episode_count
         for (let e = 1; e <= maxEp; e++) {

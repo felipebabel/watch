@@ -121,7 +121,7 @@ export default function ShowPage() {
   // Auto-select the season with the last watched episode (runs once when data loads)
   useEffect(() => {
     if (autoSelectedSeason || !show || !watchedMap || watchedMap.size === 0) return
-    const seasons = show.seasons.filter(s => s.season_number > 0)
+    const seasons = show.seasons.filter(s => s.season_number > 0 && s.episode_count > 0)
     // Find the highest season that has at least one watched episode
     let bestSeason = 1
     for (const s of seasons) {
@@ -182,7 +182,7 @@ export default function ShowPage() {
       qc.invalidateQueries({ queryKey: ['user-shows'] })
 
       // For each season, upsert all episodes and mark watched
-      for (const season of show.seasons.filter(s => s.season_number > 0)) {
+      for (const season of show.seasons.filter(s => s.season_number > 0 && s.episode_count > 0)) {
         // Fetch episode list from TMDB
         const { episodes } = await import('../lib/tmdb').then(m =>
           m.tmdb.getSeasonEpisodes(tmdbId, season.season_number)
@@ -244,7 +244,7 @@ export default function ShowPage() {
         await setShowStatus(user!.id, currentShowDbId, 'watching')
         qc.invalidateQueries({ queryKey: ['user-shows'] })
       }
-      for (const s of show.seasons.filter(se => se.season_number > 0)) {
+      for (const s of show.seasons.filter(se => se.season_number > 0 && se.episode_count > 0)) {
         if (s.season_number > untilSeason) break
         const maxEp = s.season_number === untilSeason ? untilEpisode - 1 : s.episode_count
         for (let e = 1; e <= maxEp; e++) {
@@ -273,7 +273,7 @@ export default function ShowPage() {
     if (!showDbId) return false
     // Use watchedMap if loaded, otherwise treat as empty (show exists but no watched episodes)
     const wm = watchedMap ?? new Map()
-    for (const s of show.seasons.filter(se => se.season_number > 0)) {
+    for (const s of show.seasons.filter(se => se.season_number > 0 && se.episode_count > 0)) {
       if (s.season_number > season) break
       const maxEp = s.season_number === season ? episode - 1 : s.episode_count
       for (let e = 1; e <= maxEp; e++) {
@@ -444,7 +444,7 @@ export default function ShowPage() {
 
         {/* Season tabs */}
         <div className="mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {show.seasons.filter(s => s.season_number > 0).map(season => {
+          {show.seasons.filter(s => s.season_number > 0 && s.episode_count > 0).map(season => {
             const complete = !watchedMapLoading && isSeasonComplete(season.season_number, season.episode_count)
             const isSelected = selectedSeason === season.season_number
             return (
