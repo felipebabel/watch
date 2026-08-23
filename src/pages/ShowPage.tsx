@@ -218,16 +218,32 @@ export default function ShowPage() {
         await setShowStatus(user!.id, currentShowDbId, 'watching')
         qc.invalidateQueries({ queryKey: ['user-shows'] })
       } else if (currentShowDbId && userShow?.status === 'watchlist' && !watched) {
-        // Upgrade from watchlist → watching when first episode is marked
         await setShowStatus(user!.id, currentShowDbId, 'watching')
         qc.invalidateQueries({ queryKey: ['user-shows'] })
       }
       await toggleEpisodeWatched(user!.id, currentShowDbId, season, episode, name, watched)
     },
-    onSuccess: () => {
-      // Invalidate all watched queries so ShowsTab updates too
+    onSuccess: async () => {
       qc.invalidateQueries({ queryKey: ['watched-map', user?.id, showDbId] })
       qc.invalidateQueries({ queryKey: ['watched-numbers', user?.id, showDbId] })
+
+      // Auto-complete: check if all episodes of all seasons are now watched
+      if (!show || !showDbId || !user) return
+      const validSeasons = show.seasons.filter(s => s.season_number > 0 && s.episode_count > 0)
+      const totalEps = validSeasons.reduce((sum, s) => sum + s.episode_count, 0)
+
+      // Fetch fresh watched count
+      const { data: watchedRows } = await supabase
+        .from('watched_episodes')
+        .select('episode_id, episodes!inner(show_id)')
+        .eq('user_id', user.id)
+        .eq('episodes.show_id', showDbId)
+
+      const watchedCount = watchedRows?.length ?? 0
+      if (watchedCount >= totalEps && userShow && userShow.status !== 'completed') {
+        await setShowStatus(user.id, showDbId, 'completed')
+        qc.invalidateQueries({ queryKey: ['user-shows'] })
+      }
     },
   })
 
