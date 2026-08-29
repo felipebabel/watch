@@ -1,6 +1,6 @@
 {
-  "name": "WatchTime",
-  "short_name": "WatchTime",
+  "name": "Watch",
+  "short_name": "Watch",
   "description": "Acompanhe séries e filmes que você assistiu",
   "start_url": "/",
   "display": "standalone",
